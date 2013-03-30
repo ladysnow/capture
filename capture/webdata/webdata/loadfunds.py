@@ -186,6 +186,7 @@ for n in range(1,int(pages.getNumberOfPages())+1):
             sys.exit(0)    
 
 conn.close()
+
 print("Captured %s records from HTML pages and updated the DB accordingly! [OK]" % (r))
 print("Database closed! [OK]")
 print("Capture end! [%s]" % (date.now().strftime("%Y-%m-%d %H:%M:%S")) )  
