@@ -16,7 +16,6 @@ class HTMLPages:
     def getNumberOfPages(self):
         if (self._numberOfPages == 0):
             urlString = self.getPage(HTMLPages.URLvalue).xpath("//li/a[text() = 'Sista']/@href")
-            print (str(urlString))
             if (len(urlString) > 0):
                 self._numberOfPages = int(urlString[0].split("page=")[1].split("&")[0])
         return self._numberOfPages
@@ -92,11 +91,9 @@ class ScandiaFund:
         self.valueDate += date[0]
         if (len(table[8].xpath("./a/@href")) >0): 
             self.detailURL1 =   table[8].xpath("./a/@href")[0] 
-            print("1 "+ self.detailURL1)
         if (len(table[0].xpath("./span/a/@href")) > 0):
             self.detailURL2 = table[0].xpath("./span/a/@href")[0]
-            print ("2 "+ str(self.detailURL2))
-        
+
         # risk
         table = self.htmlPages.findTableByNumber(HTMLPages.URLrisk,self.pageNumber,self.symbol)
         self.riskSTD = self.assertNumber(table[6].text.strip())
@@ -127,8 +124,10 @@ class ScandiaFund:
         keys = vars(self).keys()
         for k in keys:
             print (k, '=' , h[k])
+
+date = datetime.datetime.now()
             
-     
+print("Capture start! [%s]" % (date.now().strftime("%Y-%m-%d %H:%M:%S")) )      
 pages = HTMLPages()    
 try:
     if ( pages.getNumberOfPages() == 0 ):
@@ -147,14 +146,16 @@ except mysql.connector.Error as err:
     print("Exception " + str(err))
     sys.exit(0)
 
-print("Database opened!") 
+print("Database opened! [OK]") 
+
 cursor = conn.cursor()
 
+print("Capture data from HTML pages and write database...")
+r=0
 for n in range(1,int(pages.getNumberOfPages())+1):
     for s in pages.listSymbolsByNumber(n):
-        print ("Getting page# " + str(n) + " symbol " + s)
         fund = ScandiaFund(pages,n,s)
-        #fund.dump()
+        r += 1
         try:     
             cursor.execute (statement1, (fund.valueDate,
                                    fund.symbol,
@@ -173,9 +174,6 @@ for n in range(1,int(pages.getNumberOfPages())+1):
             sys.exit(0) 
             
         try:     
-            print (fund.symbol)
-            print (fund.detailURL1)
-            print (fund.detailURL2)
             cursor.execute (statement2,(fund.symbol,
                                         str(fund.detailURL1),
                                         str(fund.detailURL2)
@@ -188,7 +186,9 @@ for n in range(1,int(pages.getNumberOfPages())+1):
             sys.exit(0)    
 
 conn.close()
-print("Database closed!")   
+print("Captured %s records from HTML pages and updated the DB accordingly! [OK]" % (r))
+print("Database closed! [OK]")
+print("Capture end! [%s]" % (date.now().strftime("%Y-%m-%d %H:%M:%S")) )  
 
 
 
